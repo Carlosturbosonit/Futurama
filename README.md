@@ -1,0 +1,7 @@
+This repository contains an Apache Airflow ETL pipeline that extracts Futurama character data from a public API, validates the response, and generates a CSV file. The project began with an intentionally “bad” DAG for training and was refactored into a cleaner, Airflow-native implementation.
+
+Several issues were encountered during development. The DAG initially broke due to an incorrect operator import and an invalid schedule value ("hourly" instead of @hourly). At runtime, the CSV step failed because the API returned fields not included in the CSV fieldnames, which was fixed by adding the missing fields or using extrasaction="ignore".
+
+The refactor applies Airflow best practices: the pipeline is split into clear steps (extract → validate → transform), migrated to the TaskFlow API to remove boilerplate and manual XCom handling, and configured via Airflow Variables (API URL and base output path) to avoid hardcoding environment-specific settings. The extraction step also implements idempotency by hashing the API payload: if the data has not changed compared to the last stored file, the run is skipped; if it has changed, a new timestamped JSON and CSV are generated.
+
+Outputs are written under the configured base path (default /opt/airflow/data) into raw/ for JSON and processed/ for CSV. Future improvements could include using an Airflow HTTP Connection/Hook instead of requests, publishing Datasets for downstream DAGs, and adding metrics and tests for stronger operational reliability.
